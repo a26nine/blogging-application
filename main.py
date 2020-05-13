@@ -1,7 +1,7 @@
-from kivy.uix.boxlayout import BoxLayout
-from kivymd.app import MDApp
 import sqlite3 as sql
 
+from kivy.uix.boxlayout import BoxLayout
+from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 
 
@@ -27,11 +27,13 @@ class MyLayout(BoxLayout):
         con.commit()
         cur.execute("""SELECT * FROM content""")
         count = cur.fetchall()
-        for c in count[0:5]:
+        blog_number = len(count)
+        for c in reversed(count):
             old_text = c[0]
-            blog_str = "BLOG #" + str(count.index(c)+1)
-            self.output.add_widget(MDLabel(text=blog_str))
-            self.output.add_widget(MDLabel(text=old_text))
+            blog_str = "BLOG #" + str(blog_number)
+            self.output.add_widget(MDLabel(text=blog_str, size_hint_y=None))
+            self.output.add_widget(MDLabel(text=old_text, size_hint_y=None))
+            blog_number -= 1
         con.close()
 
 

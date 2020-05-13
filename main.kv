@@ -21,6 +21,9 @@ MyLayout:
                                 text: "Post"
                                 on_release: root.post_text()
 
-                GridLayout:
-                        id: blog2
-                        cols: 1
+                ScrollView:
+                        GridLayout:
+                                size_hint_y: None
+                                height: self.minimum_height
+                                id: blog2
+                                cols: 1
