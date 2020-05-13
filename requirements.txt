@@ -4,6 +4,8 @@ docutils==0.16
 idna==2.9
 Kivy==1.11.1
 Kivy-Garden==0.1.4
+kivymd==0.104.1
+Pillow==7.1.2
 Pygments==2.6.1
 requests==2.23.0
 urllib3==1.25.9
