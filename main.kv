@@ -8,6 +8,26 @@ MyLayout:
                 orientation: 'vertical'
                 spacing: dp(16)
 
+                GridLayout:
+                        id: header
+                        size_hint_y: None
+                        height: self.minimum_height
+                        cols: 2
+
+                        MDLabel:
+                                text: "Abraar's Blog"
+
+                        GridLayout:
+                                size_hint_y: None
+                                height: self.minimum_height
+                                cols: 2
+
+                                MDFlatButton:
+                                        text: "Register"
+
+                                MDFlatButton:
+                                        text: "Login"
+
                 MDBoxLayout:
                         MDTextFieldRect:
                                 id: blog1
