@@ -1,0 +1,26 @@
+MyLayout:
+        orientation: "vertical"
+        padding: dp(48)
+        input: blog1
+        output: blog2
+
+        MDBoxLayout:
+                orientation: 'vertical'
+                spacing: dp(16)
+
+                MDBoxLayout:
+                        MDTextFieldRect:
+                                id: blog1
+
+                MDBoxLayout:
+                        adaptive_size: True
+                        height: dp(56)
+                        pos_hint: {'center_x': .5}
+
+                        MDRoundFlatButton:
+                                text: "Post"
+                                on_release: root.post_text()
+
+                MDBoxLayout:
+                        MDLabel:
+                                id: blog2
