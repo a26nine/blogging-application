@@ -2,6 +2,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.app import MDApp
 import sqlite3 as sql
 
+from kivymd.uix.label import MDLabel
+
 
 class MainApp(MDApp):
     def __init__(self=None, **kwargs):
@@ -23,8 +25,14 @@ class MyLayout(BoxLayout):
         cur = con.cursor()
         cur.execute("""INSERT INTO content (post) VALUES (?)""", (text,))
         con.commit()
+        cur.execute("""SELECT * FROM content""")
+        count = cur.fetchall()
+        for c in count[0:5]:
+            old_text = c[0]
+            blog_str = "BLOG #" + str(count.index(c)+1)
+            self.output.add_widget(MDLabel(text=blog_str))
+            self.output.add_widget(MDLabel(text=old_text))
         con.close()
-        self.output.text = text
 
 
 if __name__ == '__main__':
