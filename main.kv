@@ -41,6 +41,14 @@ MyLayout:
                                 text: "Post"
                                 on_release: root.post_text()
 
+                MDBoxLayout:
+                        adaptive_size: True
+                        height: dp(56)
+
+                        MDRoundFlatButton:
+                                text: "Load older posts.."
+                                on_release: root.load_blog()
+
                 ScrollView:
                         GridLayout:
                                 size_hint_y: None

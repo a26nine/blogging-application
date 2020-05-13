@@ -25,6 +25,12 @@ class MyLayout(BoxLayout):
         cur = con.cursor()
         cur.execute("""INSERT INTO content (post) VALUES (?)""", (text,))
         con.commit()
+        con.close()
+
+    def load_blog(self):
+        self.output.clear_widgets()
+        con = sql.connect("blog.db")
+        cur = con.cursor()
         cur.execute("""SELECT * FROM content""")
         count = cur.fetchall()
         blog_number = len(count)
