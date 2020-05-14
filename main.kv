@@ -17,7 +17,7 @@ WindowManager:
 
                         MDToolbar:
                                 title: "FLOW OF MY THOUGHTS"
-                                right_action_items: [['login', lambda x: app.root.change_screen('registration')]]
+                                right_action_items: [['account', lambda x: app.root.change_screen('registration')]]
 
 
                 MDBoxLayout:
@@ -65,25 +65,39 @@ WindowManager:
 
 <RegistrationScreen>:
         name: "registration"
+        username: username
+        password: password
+
         MDBoxLayout:
                 orientation: 'vertical'
-                padding: dp(32)
-                spacing: dp(32)
-                adaptive_height: True
 
-                MDLabel:
-                        text: "FLOW OF MY THOUGHTS"
+                MDToolbar:
+                        title: "FLOW OF MY THOUGHTS"
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')]]
 
-                MDTextFieldRound:
-                        icon_left: 'email'
+                MDGridLayout:
+                        padding: dp(32)
+                        spacing: dp(32)
+                        rows: 3
 
-                MDTextFieldRound:
-                        icon_left: 'key-variant'
-                        icon_right: 'eye-off'
+                        MDTextFieldRound:
+                                id: username
+                                icon_left: 'email'
+                                hint_text: "Email Address"
 
-                MDRoundFlatButton:
-                        text: "Back"
-                        on_release: app.root.change_screen('home')
+                        MDTextFieldRound:
+                                id: password
+                                icon_left: 'key-variant'
+                                hint_text: "Password"
+                                password: True
+
+                        AnchorLayout:
+                                anchor_x: 'center'
+                                anchor_y: 'top'
+
+                                MDFillRoundFlatButton:
+                                        text: "Register"
+                                        on_release: root.register()
 
 <BlogScreen>:
         name: "all_posts"

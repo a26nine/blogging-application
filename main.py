@@ -1,4 +1,6 @@
 import sqlite3 as sql
+import re
+import base64
 
 from kivy.uix.screenmanager import ScreenManager
 from kivymd.app import MDApp
@@ -8,12 +10,20 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.screen import MDScreen
 
 blog_db = "blog.db"
-create_blog_query = "CREATE TABLE IF NOT EXISTS content (blogid INTEGER PRIMARY KEY," \
+create_content_query = "CREATE TABLE IF NOT EXISTS content (blogid INTEGER PRIMARY KEY," \
                     "time DATETIME DEFAULT CURRENT_TIMESTAMP, title TEXT, content TEXT," \
                     "file BLOB, isprivate Integer)"
-read_blog_query = "INSERT INTO content (title, content, file, isprivate) VALUES (?,?,?,?)"
+create_users_query = "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY," \
+                     "password TEXT, isadmin Integer)"
+first_user_query = "INSERT OR IGNORE INTO users (username, password, isadmin) VALUES (?,?,?)"
+post_blog_query = "INSERT INTO content (title, content, file, isprivate) VALUES (?,?,?,?)"
+register_user_query = "INSERT INTO users (username, password, isadmin) VALUES (?,?,?)"
 isprivate = 0
 blob_path = ""
+regex_email = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+regex_password = '[A-Z]', '[a-z]', '[0-9]'
+admin_email = "admin@fot.com"
+admin_password = base64.b16encode("admin@2020".encode("utf-8"))
 
 
 def convert_to_binary(filename):
@@ -28,6 +38,16 @@ def write_data(data, filename):
         toast("Downloaded!")
 
 
+def check_email(email):
+    if re.search(regex_email, email):
+        return True
+
+
+def check_password(password):
+    if len(password) >= 8 and all(re.search(r, password) for r in regex_password):
+        return True
+
+
 class MainApp(MDApp):
     def __init__(self=None, **kwargs):
         self.title = "FLOW OF THOUGHTS"
@@ -36,7 +56,9 @@ class MainApp(MDApp):
         super().__init__(**kwargs)
         con = sql.connect(blog_db)
         cur = con.cursor()
-        cur.execute(create_blog_query)
+        cur.execute(create_content_query)
+        cur.execute(create_users_query)
+        cur.execute(first_user_query, (admin_email, admin_password, 1))
         con.commit()
         con.close()
         self.manager_open = False
@@ -84,13 +106,30 @@ class HomeScreen(MDScreen):
             blob = "NULL"
         con = sql.connect(blog_db)
         cur = con.cursor()
-        cur.execute(read_blog_query, (title, content, blob, isprivate,))
+        cur.execute(post_blog_query, (title, content, blob, isprivate,))
         con.commit()
         con.close()
 
 
 class RegistrationScreen(MDScreen):
-    pass
+    def register(self):
+        username = self.username.text
+        password = self.password.text
+        if check_email(username) is True:
+            if check_password(password) is True:
+                encrypted_password = base64.b64encode(password.encode("utf-8"))
+                con = sql.connect(blog_db)
+                cur = con.cursor()
+                cur.execute(register_user_query, (username, encrypted_password, 0))
+                con.commit()
+                con.close()
+                toast("Registration successful!")
+            else:
+                toast(
+                    "Please enter a strong password! (min 8 character, min 1 lowercase, min 1 uppercase, min 1 digit)",
+                    duration=9)
+        else:
+            toast("Invalid email address!")
 
 
 class BlogScreen(MDScreen):
