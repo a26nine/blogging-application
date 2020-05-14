@@ -1,60 +1,67 @@
 WindowManager:
         HomeScreen:
         RegistrationScreen:
+        BlogScreen:
 
 <HomeScreen>:
-        all_posts: all_posts
-        input: input
-
+        title: title
+        content: content
         name: "home"
 
         MDBoxLayout:
                 orientation: 'vertical'
-                padding: dp(32)
+
+                MDGridLayout:
+                        adaptive_height: True
+                        rows: 2
+
+                        MDToolbar:
+                                title: "FLOW OF MY THOUGHTS"
+                                right_action_items: [['login', lambda x: app.root.change_screen('registration')]]
+
+
                 MDBoxLayout:
                         orientation: 'vertical'
+                        padding: dp(16)
+                        spacing: dp(16)
+
+                        MDTextField:
+                                id: title
+                                hint_text: "Title"
+
+                        MDTextFieldRect:
+                                id: content
+                                hint_text: "Content here.."
+
+                        MDTextButton:
+                                text: "Attach Media"
+                                on_release: app.file_manager_open()
 
                         MDGridLayout:
-                                adaptive_height: True
                                 cols: 2
+                                col_default_width: 144
+                                col_force_default: True
 
                                 MDLabel:
-                                        text: "FLOW OF MY THOUGHTS"
+                                        text: "Private"
 
-                                MDGridLayout:
-                                        adaptive_height: True
-                                        cols: 2
-
-                                        MDFlatButton:
-                                                text: "Registration"
-                                                on_release: app.root.current = 'registration'
+                                MDCheckbox:
+                                        on_active: app.on_checkbox_active(*args)
 
                         MDBoxLayout:
-                                MDTextFieldRect:
-                                        id: input
-
-                        MDBoxLayout:
+                                orientation: 'vertical'
                                 adaptive_size: True
-                                padding: dp(16)
-                                pos_hint: {'center_x': .5}
+                                pos_hint: {'right': 1}
 
-                                MDRoundFlatButton:
-                                        text: "Post"
+                                MDRaisedButton:
+                                        text: "Post!"
                                         on_release: root.post_text()
 
-                        MDBoxLayout:
-                                adaptive_size: True
-                                padding: dp(16)
 
-                                MDRoundFlatButton:
-                                        text: "Load older posts.."
-                                        on_release: root.load_blog()
+                        MDRoundFlatButton:
+                                text: "Recent blog posts.."
+                                on_release: app.root.change_screen("all_posts")
 
-                        ScrollView:
-                                MDGridLayout:
-                                        adaptive_height: True
-                                        id: all_posts
-                                        cols: 1
 
 <RegistrationScreen>:
         name: "registration"
@@ -76,4 +83,27 @@ WindowManager:
 
                 MDRoundFlatButton:
                         text: "Back"
-                        on_release: app.root.current = 'home'
+                        on_release: app.root.change_screen('home')
+
+<BlogScreen>:
+        name: "all_posts"
+
+        MDBoxLayout:
+                orientation: 'vertical'
+
+                MDToolbar:
+                        title: "FLOW OF MY THOUGHTS"
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('registration')]]
+
+                MDBoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(8)
+
+                        ScrollView:
+                                pos_hint: {'center_x': .55}
+
+                                MDGridLayout:
+                                        adaptive_height: True
+                                        spacing: dp(32)
+                                        id: list
+                                        cols: 2
