@@ -1,7 +1,9 @@
 WindowManager:
+        id: manager
         HomeScreen:
         RegistrationScreen:
         BlogScreen:
+        PostScreen:
 
 <HomeScreen>:
         title: title
@@ -107,17 +109,35 @@ WindowManager:
 
                 MDToolbar:
                         title: "FLOW OF MY THOUGHTS"
-                        right_action_items: [['login-variant', lambda x: app.root.change_screen('registration')]]
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')]]
 
                 MDBoxLayout:
                         orientation: 'vertical'
                         padding: dp(8)
 
                         ScrollView:
-                                pos_hint: {'center_x': .55}
 
                                 MDGridLayout:
                                         adaptive_height: True
+                                        padding: dp(32)
                                         spacing: dp(32)
                                         id: list
                                         cols: 2
+
+<PostScreen>:
+        name: "post"
+
+        MDBoxLayout:
+                id: box_post
+                orientation: 'vertical'
+
+                MDToolbar:
+                        title: "FLOW OF MY THOUGHTS"
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('all_posts')]]
+
+                MDGridLayout:
+                        padding: dp(32)
+                        spacing: dp(32)
+                        rows: 3
+
+<PostLabel>:

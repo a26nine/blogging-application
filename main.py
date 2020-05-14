@@ -1,22 +1,25 @@
-import sqlite3 as sql
-import re
 import base64
+import re
+import sqlite3 as sql
 
+import geocoder
+import httpagentparser
 from kivy.uix.screenmanager import ScreenManager
 from kivymd.app import MDApp
 from kivymd.toast import toast
+from kivymd.uix.button import MDTextButton
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.label import MDLabel
 from kivymd.uix.screen import MDScreen
 
 blog_db = "blog.db"
 create_content_query = "CREATE TABLE IF NOT EXISTS content (blogid INTEGER PRIMARY KEY," \
-                    "time DATETIME DEFAULT CURRENT_TIMESTAMP, title TEXT, content TEXT," \
-                    "file BLOB, isprivate Integer)"
+                       "time DATETIME DEFAULT CURRENT_TIMESTAMP, title TEXT, content TEXT," \
+                       "file BLOB, isprivate Integer, ip TEXT, location TEXT, device TEXT)"
 create_users_query = "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY," \
                      "password TEXT, isadmin Integer)"
 first_user_query = "INSERT OR IGNORE INTO users (username, password, isadmin) VALUES (?,?,?)"
-post_blog_query = "INSERT INTO content (title, content, file, isprivate) VALUES (?,?,?,?)"
+post_blog_query = "INSERT INTO content (title, content, file, isprivate, ip, location, device) VALUES (?,?,?,?,?,?,?)"
 register_user_query = "INSERT INTO users (username, password, isadmin) VALUES (?,?,?)"
 isprivate = 0
 blob_path = ""
@@ -24,6 +27,8 @@ regex_email = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 regex_password = '[A-Z]', '[a-z]', '[0-9]'
 admin_email = "admin@fot.com"
 admin_password = base64.b16encode("admin@2020".encode("utf-8"))
+ua = 'Mozilla/5.0 (Linux; Android 4.3; C5502 Build/10.4.1.B.0.101)' \
+     'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.136 Mobile Safari/537.36'
 
 
 def convert_to_binary(filename):
@@ -104,9 +109,13 @@ class HomeScreen(MDScreen):
             blob = convert_to_binary(blob_path)
         else:
             blob = "NULL"
+        location_raw = geocoder.ip('me')
+        ip = location_raw.ip
+        location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+        device = str(httpagentparser.simple_detect(ua))
         con = sql.connect(blog_db)
         cur = con.cursor()
-        cur.execute(post_blog_query, (title, content, blob, isprivate,))
+        cur.execute(post_blog_query, (title, content, blob, isprivate, ip, location, device))
         con.commit()
         con.close()
 
@@ -134,25 +143,32 @@ class RegistrationScreen(MDScreen):
 
 class BlogScreen(MDScreen):
     def on_enter(self, *args):
-        # self.clear_widgets()
         con = sql.connect("blog.db")
         cur = con.cursor()
         cur.execute("""SELECT * FROM content""")
         count = cur.fetchall()
-        blog_number = len(count)
         for c in reversed(count):
-            old_text = c[0]
-            blog_str = "BLOG #" + str(blog_number)
+            blog_id = c[0]
+            title = c[2]
+            blog_str = "BLOG #" + str(blog_id)
             self.ids.list.add_widget(MDLabel(text=blog_str))
-            self.ids.list.add_widget(MDLabel(text=old_text))
-            blog_number -= 1
+            self.ids.list.add_widget(PostLabel(text=title))
+            blog_id -= 1
         con.close()
+
+
+class PostScreen(MDScreen):
+    pass
 
 
 class WindowManager(ScreenManager):
 
     def change_screen(self, screen):
         self.current = screen
+
+
+class PostLabel(MDTextButton):
+    pass
 
 
 if __name__ == '__main__':
