@@ -1,57 +1,79 @@
-MyLayout:
-        orientation: "vertical"
-        padding: dp(48)
-        input: blog1
-        output: blog2
+WindowManager:
+        HomeScreen:
+        RegistrationScreen:
+
+<HomeScreen>:
+        all_posts: all_posts
+        input: input
+
+        name: "home"
 
         MDBoxLayout:
                 orientation: 'vertical'
-                spacing: dp(16)
+                padding: dp(32)
+                MDBoxLayout:
+                        orientation: 'vertical'
 
-                GridLayout:
-                        id: header
-                        size_hint_y: None
-                        height: self.minimum_height
-                        cols: 2
-
-                        MDLabel:
-                                text: "Abraar's Blog"
-
-                        GridLayout:
-                                size_hint_y: None
-                                height: self.minimum_height
+                        MDGridLayout:
+                                adaptive_height: True
                                 cols: 2
 
-                                MDFlatButton:
-                                        text: "Register"
+                                MDLabel:
+                                        text: "FLOW OF MY THOUGHTS"
 
-                                MDFlatButton:
-                                        text: "Login"
+                                MDGridLayout:
+                                        adaptive_height: True
+                                        cols: 2
 
-                MDBoxLayout:
-                        MDTextFieldRect:
-                                id: blog1
+                                        MDFlatButton:
+                                                text: "Registration"
+                                                on_release: app.root.current = 'registration'
 
-                MDBoxLayout:
-                        adaptive_size: True
-                        height: dp(56)
-                        pos_hint: {'center_x': .5}
+                        MDBoxLayout:
+                                MDTextFieldRect:
+                                        id: input
 
-                        MDRoundFlatButton:
-                                text: "Post"
-                                on_release: root.post_text()
+                        MDBoxLayout:
+                                adaptive_size: True
+                                padding: dp(16)
+                                pos_hint: {'center_x': .5}
 
-                MDBoxLayout:
-                        adaptive_size: True
-                        height: dp(56)
+                                MDRoundFlatButton:
+                                        text: "Post"
+                                        on_release: root.post_text()
 
-                        MDRoundFlatButton:
-                                text: "Load older posts.."
-                                on_release: root.load_blog()
+                        MDBoxLayout:
+                                adaptive_size: True
+                                padding: dp(16)
 
-                ScrollView:
-                        GridLayout:
-                                size_hint_y: None
-                                height: self.minimum_height
-                                id: blog2
-                                cols: 1
+                                MDRoundFlatButton:
+                                        text: "Load older posts.."
+                                        on_release: root.load_blog()
+
+                        ScrollView:
+                                MDGridLayout:
+                                        adaptive_height: True
+                                        id: all_posts
+                                        cols: 1
+
+<RegistrationScreen>:
+        name: "registration"
+        MDBoxLayout:
+                orientation: 'vertical'
+                padding: dp(32)
+                spacing: dp(32)
+                adaptive_height: True
+
+                MDLabel:
+                        text: "FLOW OF MY THOUGHTS"
+
+                MDTextFieldRound:
+                        icon_left: 'email'
+
+                MDTextFieldRound:
+                        icon_left: 'key-variant'
+                        icon_right: 'eye-off'
+
+                MDRoundFlatButton:
+                        text: "Back"
+                        on_release: app.root.current = 'home'
