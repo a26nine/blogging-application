@@ -7,12 +7,12 @@ import httpagentparser
 from kivy.uix.screenmanager import ScreenManager
 from kivymd.app import MDApp
 from kivymd.toast import toast
-from kivymd.uix.button import MDTextButton
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.label import MDLabel
 from kivymd.uix.screen import MDScreen
 
 blog_db = "blog.db"
+blob_path = ""
 create_content_query = "CREATE TABLE IF NOT EXISTS content (blogid INTEGER PRIMARY KEY," \
                        "time DATETIME DEFAULT CURRENT_TIMESTAMP, title TEXT, content TEXT," \
                        "file BLOB, isprivate Integer, ip TEXT, location TEXT, device TEXT)"
@@ -21,14 +21,13 @@ create_users_query = "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KE
 first_user_query = "INSERT OR IGNORE INTO users (username, password, isadmin) VALUES (?,?,?)"
 post_blog_query = "INSERT INTO content (title, content, file, isprivate, ip, location, device) VALUES (?,?,?,?,?,?,?)"
 register_user_query = "INSERT INTO users (username, password, isadmin) VALUES (?,?,?)"
-isprivate = 0
-blob_path = ""
+admin_email = "admin@fot.com"
+admin_password = base64.b64encode("Admin@2020".encode("utf-8"))
 regex_email = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 regex_password = '[A-Z]', '[a-z]', '[0-9]'
-admin_email = "admin@fot.com"
-admin_password = base64.b16encode("admin@2020".encode("utf-8"))
 ua = 'Mozilla/5.0 (Linux; Android 4.3; C5502 Build/10.4.1.B.0.101)' \
      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.136 Mobile Safari/537.36'
+isprivate = 0
 
 
 def convert_to_binary(filename):
@@ -43,12 +42,12 @@ def write_data(data, filename):
         toast("Downloaded!")
 
 
-def check_email(email):
+def check_email_valid(email):
     if re.search(regex_email, email):
         return True
 
 
-def check_password(password):
+def check_password_strength(password):
     if len(password) >= 8 and all(re.search(r, password) for r in regex_password):
         return True
 
@@ -103,33 +102,76 @@ class MainApp(MDApp):
 
 class HomeScreen(MDScreen):
     def post_text(self):
-        title = self.title.text
-        content = self.content.text
-        if blob_path != "":
-            blob = convert_to_binary(blob_path)
-        else:
-            blob = "NULL"
-        location_raw = geocoder.ip('me')
-        ip = location_raw.ip
-        location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
-        device = str(httpagentparser.simple_detect(ua))
         con = sql.connect(blog_db)
         cur = con.cursor()
-        cur.execute(post_blog_query, (title, content, blob, isprivate, ip, location, device))
-        con.commit()
+        email = self.email.text
+        password = self.password.text
+        if email == "" or password == "":
+            toast("Please enter email/password!")
+        else:
+            cur.execute("SELECT * FROM users WHERE username = ?", (email,))
+            user_data = cur.fetchone()
+            if user_data is None:
+                toast("User does not exist!")
+            else:
+                if base64.b64decode(user_data[1]).decode("utf-8") == password:
+                    title = self.title.text
+                    content = self.content.text
+                    if title == "" or content == "":
+                        toast("Please enter title and content!")
+                    else:
+                        if isprivate == 1:
+                            content = base64.b64encode(content.encode("utf-8"))
+                        if blob_path != "":
+                            blob = convert_to_binary(blob_path)
+                        else:
+                            blob = "NULL"
+                        location_raw = geocoder.ip('me')
+                        ip = location_raw.ip
+                        location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+                        device = str(httpagentparser.simple_detect(ua))
+                        cur.execute(post_blog_query, (title, content, blob, isprivate, ip, location, device))
+                        con.commit()
+                        last_blog_id = cur.execute("SELECT rowid from content order by ROWID DESC limit 1").fetchone()
+                        toast(("Post successful! Blog # " + str(last_blog_id[0])), 9)
+                else:
+                    toast("Invalid password!")
         con.close()
+
+
+class ListScreen(MDScreen):
+    def on_enter(self, *args):
+        con = sql.connect("blog.db")
+        cur = con.cursor()
+        cur.execute("""SELECT * FROM content""")
+        count = cur.fetchall()
+        for c in reversed(count):
+            blog_id = c[0]
+            title = c[2]
+            blog_str = "BLOG #" + str(blog_id)
+            self.ids.post_list.add_widget(MDLabel(text=blog_str))
+            self.ids.post_list.add_widget(MDLabel(text=title))
+            blog_id -= 1
+        con.close()
+
+    def on_leave(self, *args):
+        self.ids.post_list.clear_widgets()
+
+
+class PostScreen(MDScreen):
+    pass
 
 
 class RegistrationScreen(MDScreen):
     def register(self):
-        username = self.username.text
+        email = self.email.text
         password = self.password.text
-        if check_email(username) is True:
-            if check_password(password) is True:
+        if check_email_valid(email) is True:
+            if check_password_strength(password) is True:
                 encrypted_password = base64.b64encode(password.encode("utf-8"))
                 con = sql.connect(blog_db)
                 cur = con.cursor()
-                cur.execute(register_user_query, (username, encrypted_password, 0))
+                cur.execute(register_user_query, (email, encrypted_password, 0))
                 con.commit()
                 con.close()
                 toast("Registration successful!")
@@ -141,34 +183,10 @@ class RegistrationScreen(MDScreen):
             toast("Invalid email address!")
 
 
-class BlogScreen(MDScreen):
-    def on_enter(self, *args):
-        con = sql.connect("blog.db")
-        cur = con.cursor()
-        cur.execute("""SELECT * FROM content""")
-        count = cur.fetchall()
-        for c in reversed(count):
-            blog_id = c[0]
-            title = c[2]
-            blog_str = "BLOG #" + str(blog_id)
-            self.ids.list.add_widget(MDLabel(text=blog_str))
-            self.ids.list.add_widget(PostLabel(text=title))
-            blog_id -= 1
-        con.close()
-
-
-class PostScreen(MDScreen):
-    pass
-
-
 class WindowManager(ScreenManager):
 
     def change_screen(self, screen):
         self.current = screen
-
-
-class PostLabel(MDTextButton):
-    pass
 
 
 if __name__ == '__main__':

@@ -1,31 +1,46 @@
 WindowManager:
-        id: manager
+        id: window_manager
+
         HomeScreen:
-        RegistrationScreen:
-        BlogScreen:
+        ListScreen:
         PostScreen:
+        RegistrationScreen:
 
 <HomeScreen>:
+        name: "home"
+
+        email: email
+        password: password
         title: title
         content: content
-        name: "home"
 
         MDBoxLayout:
                 orientation: 'vertical'
 
-                MDGridLayout:
-                        adaptive_height: True
-                        rows: 2
-
-                        MDToolbar:
-                                title: "FLOW OF MY THOUGHTS"
-                                right_action_items: [['account', lambda x: app.root.change_screen('registration')]]
-
+                MDToolbar:
+                        title: "FLOW OF THOUGHTS"
+                        right_action_items: [['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')], ['account', lambda x: app.root.change_screen('registration')]]
 
                 MDBoxLayout:
                         orientation: 'vertical'
                         padding: dp(16)
                         spacing: dp(16)
+
+                        MDStackLayout:
+                                orientation: 'lr-tb'
+                                padding: dp(16)
+                                spacing: dp(16)
+
+                                MDTextFieldRound:
+                                        id: email
+                                        icon_left: 'email'
+                                        hint_text: "Email Address"
+
+                                MDTextFieldRound:
+                                        id: password
+                                        icon_left: 'key-variant'
+                                        hint_text: "Password"
+                                        password: True
 
                         MDTextField:
                                 id: title
@@ -50,19 +65,35 @@ WindowManager:
                                 MDCheckbox:
                                         on_active: app.on_checkbox_active(*args)
 
-                        MDBoxLayout:
-                                orientation: 'vertical'
-                                adaptive_size: True
-                                pos_hint: {'right': 1}
+                        MDStackLayout:
+                                orientation: 'rl-tb'
 
                                 MDRaisedButton:
                                         text: "Post!"
                                         on_release: root.post_text()
 
+<ListScreen>:
+        name: "list"
 
-                        MDRoundFlatButton:
-                                text: "Recent blog posts.."
-                                on_release: app.root.change_screen("all_posts")
+        MDBoxLayout:
+                orientation: 'vertical'
+
+                MDToolbar:
+                        title: "FLOW OF THOUGHTS"
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['file-edit', lambda x: app.root.change_screen('post')], ['account', lambda x: app.root.change_screen('registration')]]
+
+                MDBoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(8)
+
+                        ScrollView:
+
+                                MDGridLayout:
+                                        id: post_list
+                                        adaptive_height: True
+                                        padding: dp(32)
+                                        spacing: dp(32)
+                                        cols: 2
 
 
 <RegistrationScreen>:
@@ -101,43 +132,6 @@ WindowManager:
                                         text: "Register"
                                         on_release: root.register()
 
-<BlogScreen>:
-        name: "all_posts"
-
-        MDBoxLayout:
-                orientation: 'vertical'
-
-                MDToolbar:
-                        title: "FLOW OF MY THOUGHTS"
-                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')]]
-
-                MDBoxLayout:
-                        orientation: 'vertical'
-                        padding: dp(8)
-
-                        ScrollView:
-
-                                MDGridLayout:
-                                        adaptive_height: True
-                                        padding: dp(32)
-                                        spacing: dp(32)
-                                        id: list
-                                        cols: 2
-
 <PostScreen>:
         name: "post"
 
-        MDBoxLayout:
-                id: box_post
-                orientation: 'vertical'
-
-                MDToolbar:
-                        title: "FLOW OF MY THOUGHTS"
-                        right_action_items: [['login-variant', lambda x: app.root.change_screen('all_posts')]]
-
-                MDGridLayout:
-                        padding: dp(32)
-                        spacing: dp(32)
-                        rows: 3
-
-<PostLabel>:
