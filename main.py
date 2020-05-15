@@ -15,12 +15,15 @@ blog_db = "blog.db"
 blob_path = ""
 create_content_query = "CREATE TABLE IF NOT EXISTS content (blogid INTEGER PRIMARY KEY," \
                        "time DATETIME DEFAULT CURRENT_TIMESTAMP, title TEXT, content TEXT," \
-                       "file BLOB, isprivate Integer, ip TEXT, location TEXT, device TEXT)"
-create_users_query = "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY," \
+                       "file BLOB, isprivate Integer)"
+create_users_query = "CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY," \
                      "password TEXT, isadmin Integer)"
-first_user_query = "INSERT OR IGNORE INTO users (username, password, isadmin) VALUES (?,?,?)"
-post_blog_query = "INSERT INTO content (title, content, file, isprivate, ip, location, device) VALUES (?,?,?,?,?,?,?)"
-register_user_query = "INSERT INTO users (username, password, isadmin) VALUES (?,?,?)"
+create_log_query = "CREATE TABLE IF NOT EXISTS log (time DATETIME DEFAULT CURRENT_TIMESTAMP," \
+                   "activity TEXT, email TEXT, ip TEXT, location TEXT, device TEXT)"
+first_user_query = "INSERT OR IGNORE INTO users (email, password, isadmin) VALUES (?,?,?)"
+post_blog_query = "INSERT INTO content (title, content, file, isprivate) VALUES (?,?,?,?)"
+register_user_query = "INSERT INTO users (email, password, isadmin) VALUES (?,?,?)"
+insert_log_query = "INSERT INTO log (activity, email, ip, location, device) VALUES (?,?,?,?,?)"
 admin_email = "admin@fot.com"
 admin_password = base64.b64encode("Admin@2020".encode("utf-8"))
 regex_email = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
@@ -63,6 +66,7 @@ class MainApp(MDApp):
         cur.execute(create_content_query)
         cur.execute(create_users_query)
         cur.execute(first_user_query, (admin_email, admin_password, 1))
+        cur.execute(create_log_query)
         con.commit()
         con.close()
         self.manager_open = False
@@ -109,7 +113,7 @@ class HomeScreen(MDScreen):
         if email == "" or password == "":
             toast("Please enter email/password!")
         else:
-            cur.execute("SELECT * FROM users WHERE username = ?", (email,))
+            cur.execute("SELECT * FROM users WHERE email = ?", (email,))
             user_data = cur.fetchone()
             if user_data is None:
                 toast("User does not exist!")
@@ -130,10 +134,11 @@ class HomeScreen(MDScreen):
                         ip = location_raw.ip
                         location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
                         device = str(httpagentparser.simple_detect(ua))
-                        cur.execute(post_blog_query, (title, content, blob, isprivate, ip, location, device))
+                        cur.execute(post_blog_query, (title, content, blob, isprivate))
+                        cur.execute(insert_log_query, ("new_post", email, ip, location, device))
                         con.commit()
                         last_blog_id = cur.execute("SELECT rowid from content order by ROWID DESC limit 1").fetchone()
-                        toast(("Post successful! Blog # " + str(last_blog_id[0])), 9)
+                        toast(("Post successful! Blog #" + str(last_blog_id[0])), 9)
                 else:
                     toast("Invalid password!")
         con.close()
@@ -141,7 +146,7 @@ class HomeScreen(MDScreen):
 
 class ListScreen(MDScreen):
     def on_enter(self, *args):
-        con = sql.connect("blog.db")
+        con = sql.connect(blog_db)
         cur = con.cursor()
         cur.execute("""SELECT * FROM content""")
         count = cur.fetchall()
@@ -151,7 +156,12 @@ class ListScreen(MDScreen):
             blog_str = "BLOG #" + str(blog_id)
             self.ids.post_list.add_widget(MDLabel(text=blog_str))
             self.ids.post_list.add_widget(MDLabel(text=title))
-            blog_id -= 1
+        location_raw = geocoder.ip('me')
+        ip = location_raw.ip
+        location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+        device = str(httpagentparser.simple_detect(ua))
+        cur.execute(insert_log_query, ("list_posts", "guest", ip, location, device))
+        con.commit()
         con.close()
 
     def on_leave(self, *args):
@@ -172,6 +182,11 @@ class RegistrationScreen(MDScreen):
                 con = sql.connect(blog_db)
                 cur = con.cursor()
                 cur.execute(register_user_query, (email, encrypted_password, 0))
+                location_raw = geocoder.ip('me')
+                ip = location_raw.ip
+                location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+                device = str(httpagentparser.simple_detect(ua))
+                cur.execute(insert_log_query, ("user_registration", email, ip, location, device))
                 con.commit()
                 con.close()
                 toast("Registration successful!")

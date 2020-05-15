@@ -6,6 +6,7 @@ WindowManager:
         PostScreen:
         RegistrationScreen:
 
+
 <HomeScreen>:
         name: "home"
 
@@ -72,6 +73,7 @@ WindowManager:
                                         text: "Post!"
                                         on_release: root.post_text()
 
+
 <ListScreen>:
         name: "list"
 
@@ -84,21 +86,25 @@ WindowManager:
 
                 MDBoxLayout:
                         orientation: 'vertical'
-                        padding: dp(8)
+                        padding: dp(16)
 
                         ScrollView:
 
                                 MDGridLayout:
                                         id: post_list
+                                        cols: 2
                                         adaptive_height: True
                                         padding: dp(32)
-                                        spacing: dp(32)
-                                        cols: 2
+                                        spacing: dp(48)
+
+
+<PostScreen>:
+        name: "post"
 
 
 <RegistrationScreen>:
         name: "registration"
-        username: username
+        email: email
         password: password
 
         MDBoxLayout:
@@ -106,7 +112,7 @@ WindowManager:
 
                 MDToolbar:
                         title: "FLOW OF MY THOUGHTS"
-                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')]]
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')]]
 
                 MDGridLayout:
                         padding: dp(32)
@@ -114,7 +120,7 @@ WindowManager:
                         rows: 3
 
                         MDTextFieldRound:
-                                id: username
+                                id: email
                                 icon_left: 'email'
                                 hint_text: "Email Address"
 
@@ -131,7 +137,3 @@ WindowManager:
                                 MDFillRoundFlatButton:
                                         text: "Register"
                                         on_release: root.register()
-
-<PostScreen>:
-        name: "post"
-
