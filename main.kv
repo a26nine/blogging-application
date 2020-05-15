@@ -5,6 +5,7 @@ WindowManager:
         ListScreen:
         PostScreen:
         RegistrationScreen:
+        LogScreen:
 
 
 <HomeScreen>:
@@ -20,16 +21,15 @@ WindowManager:
 
                 MDToolbar:
                         title: "FLOW OF THOUGHTS"
-                        right_action_items: [['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')], ['account', lambda x: app.root.change_screen('registration')]]
+                        right_action_items: [['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')], ['account', lambda x: app.root.change_screen('registration')], ['file-cabinet', lambda x: app.root.change_screen('log')]]
 
                 MDBoxLayout:
                         orientation: 'vertical'
-                        padding: dp(16)
-                        spacing: dp(16)
+                        padding: dp(32)
+                        spacing: dp(32)
 
                         MDStackLayout:
                                 orientation: 'lr-tb'
-                                padding: dp(16)
                                 spacing: dp(16)
 
                                 MDTextFieldRound:
@@ -82,7 +82,7 @@ WindowManager:
 
                 MDToolbar:
                         title: "FLOW OF THOUGHTS"
-                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['file-edit', lambda x: app.root.change_screen('post')], ['account', lambda x: app.root.change_screen('registration')]]
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['file-edit', lambda x: app.root.change_screen('post')], ['account', lambda x: app.root.change_screen('registration')], ['file-cabinet', lambda x: app.root.change_screen('log')]]
 
                 MDBoxLayout:
                         orientation: 'vertical'
@@ -95,7 +95,7 @@ WindowManager:
                                         cols: 2
                                         adaptive_height: True
                                         padding: dp(32)
-                                        spacing: dp(48)
+                                        spacing: dp(64)
 
 
 <PostScreen>:
@@ -111,7 +111,7 @@ WindowManager:
 
                 MDToolbar:
                         title: "FLOW OF THOUGHTS"
-                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['account', lambda x: app.root.change_screen('registration')]]
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['account', lambda x: app.root.change_screen('registration')], ['file-cabinet', lambda x: app.root.change_screen('log')]]
 
                 MDBoxLayout:
                         orientation: 'vertical'
@@ -150,10 +150,6 @@ WindowManager:
                                         on_release: root.view_post()
 
                                 MDFillRoundFlatButton:
-                                        text: "EDIT"
-                                        width: 32
-
-                                MDFillRoundFlatButton:
                                         text: "DELETE"
                                         width: 32
                                         on_release: root.delete_post()
@@ -183,7 +179,7 @@ WindowManager:
 
                 MDToolbar:
                         title: "FLOW OF THOUGHTS"
-                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')]]
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')], ['file-cabinet', lambda x: app.root.change_screen('log')]]
 
                 MDGridLayout:
                         rows: 3
@@ -208,6 +204,61 @@ WindowManager:
                                 MDFillRoundFlatButton:
                                         text: "Register"
                                         on_release: root.register()
+
+
+<LogScreen>:
+        name: "log"
+
+        email: email
+        password: password
+
+        MDBoxLayout:
+                orientation: 'vertical'
+
+                MDToolbar:
+                        title: "FLOW OF THOUGHTS"
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')], ['account', lambda x: app.root.change_screen('registration')]]
+
+                MDBoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(64)
+                        adaptive_height: True
+
+                        MDBoxLayout:
+                                orientation: 'horizontal'
+                                padding: dp(16)
+                                spacing: dp(48)
+
+                                MDTextFieldRound:
+                                        id: email
+                                        icon_left: 'email'
+                                        hint_text: "Email Address"
+
+                                MDTextFieldRound:
+                                        id: password
+                                        icon_left: 'key-variant'
+                                        hint_text: "Password"
+                                        password: True
+
+                                MDFillRoundFlatButton:
+                                        text: "Show Log"
+                                        pos_hint: {'center_x': 0.5}
+                                        width: 32
+                                        on_release: root.show_log()
+
+                MDBoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(16)
+
+                        ScrollView:
+
+                                MDGridLayout:
+                                        id: log_list
+                                        cols: 6
+                                        row_default_height: root.height * 0.125
+                                        adaptive_height: True
+                                        padding: dp(32)
+                                        spacing: dp(48)
 
 
 <ViewLabel>:

@@ -59,7 +59,7 @@ class MainApp(MDApp):
     def __init__(self=None, **kwargs):
         self.title = "FLOW OF THOUGHTS"
         self.theme_cls.theme_style = "Light"
-        self.theme_cls.primary_palette = "Teal"
+        self.theme_cls.primary_palette = "Indigo"
         super().__init__(**kwargs)
         con = sql.connect(blog_db)
         cur = con.cursor()
@@ -111,12 +111,12 @@ class HomeScreen(MDScreen):
         email = self.email.text
         password = self.password.text
         if email == "" or password == "":
-            toast("Please enter email/password!")
+            toast("Please enter login details!")
         else:
             cur.execute("SELECT * FROM users WHERE email = ?", (email,))
             user_data = cur.fetchone()
             if user_data is None:
-                toast("User does not exist!")
+                toast("Invalid email!")
             else:
                 if base64.b64decode(user_data[1]).decode("utf-8") == password:
                     title = self.title.text
@@ -128,6 +128,7 @@ class HomeScreen(MDScreen):
                             content = base64.b64encode(content.encode("utf-8"))
                         if blob_path != "":
                             blob = convert_to_binary(blob_path)
+                            toast("Attachment uploaded!")
                         else:
                             blob = "NULL"
                         location_raw = geocoder.ip('me')
@@ -175,33 +176,36 @@ class PostScreen(MDScreen):
         blog_number = self.blog_number.text
         con = sql.connect(blog_db)
         cur = con.cursor()
-        post = cur.execute("SELECT * from content WHERE rowid = ?", (blog_number,)).fetchone()
-        user_data = cur.execute("SELECT * FROM users WHERE email = ?", (post[5],)).fetchone()
-        post_privacy = post[6]
-        if post_privacy == 1:
-            if email != "" or password != "":
-                if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
-                    self.ids.post_data.add_widget(ViewLabel(text="Blog #"))
-                    self.ids.post_data.add_widget(MDLabel(text=str(post[0])))
-                    self.ids.post_data.add_widget(ViewLabel(text="Title"))
-                    self.ids.post_data.add_widget(MDLabel(text=post[2]))
-                    self.ids.post_data.add_widget(ViewLabel(text="Content"))
-                    self.ids.post_data.add_widget(MDLabel(text=(base64.b64decode(post[3])).decode("utf-8")))
-                    if post[4] != "NULL":
-                        write_data(post[4], "Blog" + str(post[0]) + "Attachment")
+        if blog_number != "":
+            post = cur.execute("SELECT * from content WHERE rowid = ?", (blog_number,)).fetchone()
+            user_data = cur.execute("SELECT * FROM users WHERE email = ?", (post[5],)).fetchone()
+            post_privacy = post[6]
+            if post_privacy == 1:
+                if email != "" or password != "":
+                    if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
+                        self.ids.post_data.add_widget(ViewLabel(text="Blog #"))
+                        self.ids.post_data.add_widget(MDLabel(text=str(post[0])))
+                        self.ids.post_data.add_widget(ViewLabel(text="Title"))
+                        self.ids.post_data.add_widget(MDLabel(text=post[2]))
+                        self.ids.post_data.add_widget(ViewLabel(text="Content"))
+                        self.ids.post_data.add_widget(MDLabel(text=(base64.b64decode(post[3])).decode("utf-8")))
+                        if post[4] != "NULL":
+                            write_data(post[4], "Blog" + str(post[0]) + "Attachment")
+                    else:
+                        toast("Invalid login details!")
                 else:
-                    toast("Invalid email address / password!")
+                    toast("This is a private post, please enter login details!", 5)
             else:
-                toast("This is a private post, please enter login details!", 5)
+                self.ids.post_data.add_widget(ViewLabel(text="Blog #"))
+                self.ids.post_data.add_widget(MDLabel(text=str(post[0])))
+                self.ids.post_data.add_widget(ViewLabel(text="Title"))
+                self.ids.post_data.add_widget(MDLabel(text=post[2]))
+                self.ids.post_data.add_widget(ViewLabel(text="Content"))
+                self.ids.post_data.add_widget(MDLabel(text=post[3]))
+                if post[4] != "NULL":
+                    write_data(post[4], "Blog" + str(post[0]) + "Attachment")
         else:
-            self.ids.post_data.add_widget(ViewLabel(text="Blog #"))
-            self.ids.post_data.add_widget(MDLabel(text=str(post[0])))
-            self.ids.post_data.add_widget(ViewLabel(text="Title"))
-            self.ids.post_data.add_widget(MDLabel(text=post[2]))
-            self.ids.post_data.add_widget(ViewLabel(text="Content"))
-            self.ids.post_data.add_widget(MDLabel(text=post[3]))
-            if post[4] != "NULL":
-                write_data(post[4], "Blog" + str(post[0]) + "Attachment")
+            toast("Invalid blog number!")
         con.close()
 
     def delete_post(self):
@@ -210,47 +214,84 @@ class PostScreen(MDScreen):
         blog_number = self.blog_number.text
         con = sql.connect(blog_db)
         cur = con.cursor()
-        user_data = cur.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if user_data is None:
-            toast("Invalid email address or not an admin user!")
-        else:
-            if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
-                cur.execute("DELETE FROM content WHERE blogid = ?", (blog_number,))
-                con.commit()
-                toast("Post deleted!")
+        if email != "" or password != "" or blog_number != "":
+            user_data = cur.execute("SELECT * FROM users WHERE email = ? AND isadmin = 1", (email,)).fetchone()
+            if user_data is None:
+                toast("Invalid email address or not an admin user!")
             else:
-                toast("Wrong password!")
+                if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
+                    cur.execute("DELETE FROM content WHERE blogid = ?", (blog_number,))
+                    con.commit()
+                    toast("Post deleted!")
+                else:
+                    toast("Wrong password!")
+        else:
+            toast("Please enter the correct details!")
         con.close()
+
+    def on_leave(self, *args):
+        self.ids.post_data.clear_widgets()
 
 
 class RegistrationScreen(MDScreen):
     def register(self):
         email = self.email.text
         password = self.password.text
-        if check_email_valid(email) is True:
-            if check_password_strength(password) is True:
-                encrypted_password = base64.b64encode(password.encode("utf-8"))
-                con = sql.connect(blog_db)
-                cur = con.cursor()
-                cur.execute(register_user_query, (email, encrypted_password, 0))
-                location_raw = geocoder.ip('me')
-                ip = location_raw.ip
-                location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
-                device = str(httpagentparser.simple_detect(ua))
-                cur.execute(insert_log_query, ("user_registration", email, ip, location, device))
-                con.commit()
-                con.close()
-                toast("Registration successful!")
+        if email != "" and password != "":
+            if check_email_valid(email) is True:
+                if check_password_strength(password) is True:
+                    encrypted_password = base64.b64encode(password.encode("utf-8"))
+                    con = sql.connect(blog_db)
+                    cur = con.cursor()
+                    cur.execute(register_user_query, (email, encrypted_password, 0))
+                    location_raw = geocoder.ip('me')
+                    ip = location_raw.ip
+                    location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+                    device = str(httpagentparser.simple_detect(ua))
+                    cur.execute(insert_log_query, ("user_registration", email, ip, location, device))
+                    con.commit()
+                    con.close()
+                    toast("Registration successful!")
+                else:
+                    toast(
+                        "Please enter a strong password! (min 8 character, min 1 lowercase, min 1 uppercase, min 1 digit)",
+                        5)
             else:
-                toast(
-                    "Please enter a strong password! (min 8 character, min 1 lowercase, min 1 uppercase, min 1 digit)",
-                    5)
+                toast("Invalid email address!")
         else:
-            toast("Invalid email address!")
+            toast("Please enter the correct details!")
+
+
+class LogScreen(MDScreen):
+    def show_log(self):
+        email = self.email.text
+        password = self.password.text
+        con = sql.connect(blog_db)
+        cur = con.cursor()
+        if email != "" and password != "":
+            user_data = cur.execute("SELECT * FROM users WHERE email = ? AND isadmin = 1", (email,)).fetchone()
+            if user_data is None:
+                toast("Invalid email address or not an admin user!")
+            else:
+                if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
+                    cur.execute("SELECT * FROM log")
+                    count = cur.fetchall()
+                    for c in count:
+                        self.ids.log_list.add_widget(MDLabel(text=str(c[0])))
+                        self.ids.log_list.add_widget(MDLabel(text=c[1]))
+                        self.ids.log_list.add_widget(MDLabel(text=c[2]))
+                        self.ids.log_list.add_widget(MDLabel(text=c[3]))
+                        self.ids.log_list.add_widget(MDLabel(text=c[4]))
+                        self.ids.log_list.add_widget(MDLabel(text=c[5]))
+        else:
+            toast("Please enter the correct details!")
+        con.close()
+
+    def on_leave(self, *args):
+        self.ids.log_list.clear_widgets()
 
 
 class WindowManager(ScreenManager):
-
     def change_screen(self, screen):
         self.current = screen
 
