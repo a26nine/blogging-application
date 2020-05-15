@@ -148,7 +148,7 @@ class ListScreen(MDScreen):
     def on_enter(self, *args):
         con = sql.connect(blog_db)
         cur = con.cursor()
-        cur.execute("""SELECT * FROM content""")
+        cur.execute("SELECT * FROM content")
         count = cur.fetchall()
         for c in reversed(count):
             blog_id = c[0]
@@ -176,11 +176,11 @@ class PostScreen(MDScreen):
         con = sql.connect(blog_db)
         cur = con.cursor()
         post = cur.execute("SELECT * from content WHERE rowid = ?", (blog_number,)).fetchone()
-        user = cur.execute("SELECT * FROM users WHERE email = ?", (post[5], )).fetchone()
+        user_data = cur.execute("SELECT * FROM users WHERE email = ?", (post[5],)).fetchone()
         post_privacy = post[6]
         if post_privacy == 1:
             if email != "" or password != "":
-                if email == user[0] and password == base64.b64decode(user[1]).decode("utf-8"):
+                if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
                     self.ids.post_data.add_widget(ViewLabel(text="Blog #"))
                     self.ids.post_data.add_widget(MDLabel(text=str(post[0])))
                     self.ids.post_data.add_widget(ViewLabel(text="Title"))
@@ -201,8 +201,26 @@ class PostScreen(MDScreen):
             self.ids.post_data.add_widget(ViewLabel(text="Content"))
             self.ids.post_data.add_widget(MDLabel(text=post[3]))
             if post[4] != "NULL":
-                write_data(post[4], "Blog"+str(post[0])+"Attachment")
+                write_data(post[4], "Blog" + str(post[0]) + "Attachment")
+        con.close()
 
+    def delete_post(self):
+        email = self.email.text
+        password = self.password.text
+        blog_number = self.blog_number.text
+        con = sql.connect(blog_db)
+        cur = con.cursor()
+        user_data = cur.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if user_data is None:
+            toast("Invalid email address or not an admin user!")
+        else:
+            if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
+                cur.execute("DELETE FROM content WHERE blogid = ?", (blog_number,))
+                con.commit()
+                toast("Post deleted!")
+            else:
+                toast("Wrong password!")
+        con.close()
 
 
 class RegistrationScreen(MDScreen):
@@ -225,7 +243,8 @@ class RegistrationScreen(MDScreen):
                 toast("Registration successful!")
             else:
                 toast(
-                    "Please enter a strong password! (min 8 character, min 1 lowercase, min 1 uppercase, min 1 digit)", 5)
+                    "Please enter a strong password! (min 8 character, min 1 lowercase, min 1 uppercase, min 1 digit)",
+                    5)
         else:
             toast("Invalid email address!")
 
@@ -234,6 +253,7 @@ class WindowManager(ScreenManager):
 
     def change_screen(self, screen):
         self.current = screen
+
 
 class ViewLabel(MDLabel):
     pass
