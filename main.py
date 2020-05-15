@@ -191,6 +191,12 @@ class PostScreen(MDScreen):
                         self.ids.post_data.add_widget(MDLabel(text=(base64.b64decode(post[3])).decode("utf-8")))
                         if post[4] != "NULL":
                             write_data(post[4], "Blog" + str(post[0]) + "Attachment")
+                        location_raw = geocoder.ip('me')
+                        ip = location_raw.ip
+                        location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+                        device = str(httpagentparser.simple_detect(ua))
+                        cur.execute(insert_log_query, ("read_blog", email, ip, location, device))
+                        con.commit()
                     else:
                         toast("Invalid login details!")
                 else:
@@ -204,6 +210,12 @@ class PostScreen(MDScreen):
                 self.ids.post_data.add_widget(MDLabel(text=post[3]))
                 if post[4] != "NULL":
                     write_data(post[4], "Blog" + str(post[0]) + "Attachment")
+                location_raw = geocoder.ip('me')
+                ip = location_raw.ip
+                location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+                device = str(httpagentparser.simple_detect(ua))
+                cur.execute(insert_log_query, ("read_blog", "guest", ip, location, device))
+                con.commit()
         else:
             toast("Invalid blog number!")
         con.close()
@@ -221,6 +233,11 @@ class PostScreen(MDScreen):
             else:
                 if email == user_data[0] and password == base64.b64decode(user_data[1]).decode("utf-8"):
                     cur.execute("DELETE FROM content WHERE blogid = ?", (blog_number,))
+                    location_raw = geocoder.ip('me')
+                    ip = location_raw.ip
+                    location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
+                    device = str(httpagentparser.simple_detect(ua))
+                    cur.execute(insert_log_query, ("delete_blog", email, ip, location, device))
                     con.commit()
                     toast("Post deleted!")
                 else:
