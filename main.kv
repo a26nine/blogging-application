@@ -101,9 +101,79 @@ WindowManager:
 <PostScreen>:
         name: "post"
 
+        email: email
+        password: password
+        blog_number: blog_number
+
+        MDBoxLayout:
+                orientation: 'vertical'
+                spacing: dp(64)
+
+                MDToolbar:
+                        title: "FLOW OF THOUGHTS"
+                        right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['account', lambda x: app.root.change_screen('registration')]]
+
+                MDBoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(16)
+                        adaptive_height: True
+
+                        MDBoxLayout:
+                                orientation: 'horizontal'
+                                padding: dp(16)
+                                spacing: dp(48)
+
+                                MDTextFieldRound:
+                                        id: email
+                                        icon_left: 'email'
+                                        hint_text: "Email Address"
+
+                                MDTextFieldRound:
+                                        id: password
+                                        icon_left: 'key-variant'
+                                        hint_text: "Password"
+                                        password: True
+
+                        MDBoxLayout:
+                                orientation: 'horizontal'
+                                padding: dp(16)
+                                spacing: dp(48)
+                                adaptive_height: True
+
+                                MDTextFieldRound:
+                                        id: blog_number
+                                        hint_text: "Enter Blog #"
+
+                                MDFillRoundFlatButton:
+                                        text: "VIEW"
+                                        width: 32
+                                        on_release: root.view_post()
+
+                                MDFillRoundFlatButton:
+                                        text: "EDIT"
+                                        width: 32
+
+                                MDFillRoundFlatButton:
+                                        text: "DELETE"
+                                        width: 32
+
+                AnchorLayout:
+                        orientation: 'vertical'
+                        padding: dp(16)
+
+                        ScrollView:
+
+                                MDGridLayout:
+                                        id: post_data
+                                        cols: 2
+                                        adaptive_height: True
+                                        padding: dp(32)
+                                        spacing: dp(48)
+
 
 <RegistrationScreen>:
         name: "registration"
+
         email: email
         password: password
 
@@ -111,13 +181,13 @@ WindowManager:
                 orientation: 'vertical'
 
                 MDToolbar:
-                        title: "FLOW OF MY THOUGHTS"
+                        title: "FLOW OF THOUGHTS"
                         right_action_items: [['login-variant', lambda x: app.root.change_screen('home')], ['book-open', lambda x: app.root.change_screen('list')], ['file-edit', lambda x: app.root.change_screen('post')]]
 
                 MDGridLayout:
+                        rows: 3
                         padding: dp(32)
                         spacing: dp(32)
-                        rows: 3
 
                         MDTextFieldRound:
                                 id: email
@@ -137,3 +207,7 @@ WindowManager:
                                 MDFillRoundFlatButton:
                                         text: "Register"
                                         on_release: root.register()
+
+
+<ViewLabel>:
+        font_style: "H6"

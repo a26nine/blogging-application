@@ -15,13 +15,13 @@ blog_db = "blog.db"
 blob_path = ""
 create_content_query = "CREATE TABLE IF NOT EXISTS content (blogid INTEGER PRIMARY KEY," \
                        "time DATETIME DEFAULT CURRENT_TIMESTAMP, title TEXT, content TEXT," \
-                       "file BLOB, isprivate Integer)"
+                       "file BLOB, email TEXT, isprivate Integer)"
 create_users_query = "CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY," \
                      "password TEXT, isadmin Integer)"
 create_log_query = "CREATE TABLE IF NOT EXISTS log (time DATETIME DEFAULT CURRENT_TIMESTAMP," \
                    "activity TEXT, email TEXT, ip TEXT, location TEXT, device TEXT)"
 first_user_query = "INSERT OR IGNORE INTO users (email, password, isadmin) VALUES (?,?,?)"
-post_blog_query = "INSERT INTO content (title, content, file, isprivate) VALUES (?,?,?,?)"
+post_blog_query = "INSERT INTO content (title, content, file, email, isprivate) VALUES (?,?,?,?,?)"
 register_user_query = "INSERT INTO users (email, password, isadmin) VALUES (?,?,?)"
 insert_log_query = "INSERT INTO log (activity, email, ip, location, device) VALUES (?,?,?,?,?)"
 admin_email = "admin@fot.com"
@@ -42,7 +42,7 @@ def convert_to_binary(filename):
 def write_data(data, filename):
     with open(filename, 'wb') as file:
         file.write(data)
-        toast("Downloaded!")
+        toast("Attachment downloaded!")
 
 
 def check_email_valid(email):
@@ -134,7 +134,7 @@ class HomeScreen(MDScreen):
                         ip = location_raw.ip
                         location = location_raw.city + ", " + location_raw.state + ", " + location_raw.country
                         device = str(httpagentparser.simple_detect(ua))
-                        cur.execute(post_blog_query, (title, content, blob, isprivate))
+                        cur.execute(post_blog_query, (title, content, blob, email, isprivate))
                         cur.execute(insert_log_query, ("new_post", email, ip, location, device))
                         con.commit()
                         last_blog_id = cur.execute("SELECT rowid from content order by ROWID DESC limit 1").fetchone()
@@ -169,7 +169,40 @@ class ListScreen(MDScreen):
 
 
 class PostScreen(MDScreen):
-    pass
+    def view_post(self):
+        email = self.email.text
+        password = self.password.text
+        blog_number = self.blog_number.text
+        con = sql.connect(blog_db)
+        cur = con.cursor()
+        post = cur.execute("SELECT * from content WHERE rowid = ?", (blog_number,)).fetchone()
+        user = cur.execute("SELECT * FROM users WHERE email = ?", (post[5], )).fetchone()
+        post_privacy = post[6]
+        if post_privacy == 1:
+            if email != "" or password != "":
+                if email == user[0] and password == base64.b64decode(user[1]).decode("utf-8"):
+                    self.ids.post_data.add_widget(ViewLabel(text="Blog #"))
+                    self.ids.post_data.add_widget(MDLabel(text=str(post[0])))
+                    self.ids.post_data.add_widget(ViewLabel(text="Title"))
+                    self.ids.post_data.add_widget(MDLabel(text=post[2]))
+                    self.ids.post_data.add_widget(ViewLabel(text="Content"))
+                    self.ids.post_data.add_widget(MDLabel(text=(base64.b64decode(post[3])).decode("utf-8")))
+                    if post[4] != "NULL":
+                        write_data(post[4], "Blog" + str(post[0]) + "Attachment")
+                else:
+                    toast("Invalid email address / password!")
+            else:
+                toast("This is a private post, please enter login details!", 5)
+        else:
+            self.ids.post_data.add_widget(ViewLabel(text="Blog #"))
+            self.ids.post_data.add_widget(MDLabel(text=str(post[0])))
+            self.ids.post_data.add_widget(ViewLabel(text="Title"))
+            self.ids.post_data.add_widget(MDLabel(text=post[2]))
+            self.ids.post_data.add_widget(ViewLabel(text="Content"))
+            self.ids.post_data.add_widget(MDLabel(text=post[3]))
+            if post[4] != "NULL":
+                write_data(post[4], "Blog"+str(post[0])+"Attachment")
+
 
 
 class RegistrationScreen(MDScreen):
@@ -192,8 +225,7 @@ class RegistrationScreen(MDScreen):
                 toast("Registration successful!")
             else:
                 toast(
-                    "Please enter a strong password! (min 8 character, min 1 lowercase, min 1 uppercase, min 1 digit)",
-                    duration=9)
+                    "Please enter a strong password! (min 8 character, min 1 lowercase, min 1 uppercase, min 1 digit)", 5)
         else:
             toast("Invalid email address!")
 
@@ -202,6 +234,9 @@ class WindowManager(ScreenManager):
 
     def change_screen(self, screen):
         self.current = screen
+
+class ViewLabel(MDLabel):
+    pass
 
 
 if __name__ == '__main__':
