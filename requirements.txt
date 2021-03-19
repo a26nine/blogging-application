@@ -11,7 +11,7 @@ Kivy==1.11.1
 Kivy-Garden==0.1.4
 kivymd==0.104.1
 libs==0.0.9
-Pillow==7.1.2
+Pillow==8.1.1
 progressbar==2.5
 Pygments==2.6.1
 PyYAML==5.3.1
