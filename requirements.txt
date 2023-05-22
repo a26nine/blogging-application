@@ -17,7 +17,7 @@ Pygments==2.7.4
 PyYAML==5.4
 ratelim==0.1.6
 regex==2020.5.14
-requests==2.23.0
+requests==2.31.0
 six==1.14.0
 South==1.0.2
 urllib3==1.26.5
